@@ -74,7 +74,7 @@ class Channel:
         """
         a = self.__dict__
         with open(name, 'w', encoding='utf-8') as f:
-            json.dump(a, f)
+            json.dump(a, f, ensure_ascii=False)
 
 
     @classmethod
