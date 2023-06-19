@@ -3,23 +3,29 @@ import os
 from googleapiclient.discovery import build
 
 
-class Channel:
-    """Класс для ютуб - канала"""
+class MixinYoutube:
     # YT_API_KEY скопирован из гугла и вставлен в переменные окружения
     api_key: str = os.environ.get('YT_API_KEY')
-
     # создать специальный объект для работы с API
     youtube = build('youtube', 'v3', developerKey = api_key)
 
+    def info_channel(self, channel):
+        return self.youtube.channels().list(id=channel, part='snippet,statistics').execute()
+
+    def info_video(self, id_video):
+        return self.youtube.videos().list(part='snippet,statistics,contentDetails,topicDetails',
+                                       id=id_video
+                                       ).execute()
+
+
+class Channel(MixinYoutube):
+    """Класс для ютуб - канала"""
 
     def __init__(self, channel_id: str) -> None:
         """Экземпляр инициализируется id канала.
         Дальше все данные будут подтягиваться по API."""
         self.__channel_id = channel_id
-
-        channel = self.youtube.channels().list \
-            (id = channel_id, part = 'snippet,statistics').execute()
-
+        channel = self.info_channel(channel_id)
         self.title = channel['items'][0]['snippet']['title']
         self.description = channel['items'][0]['snippet']['description']
         self.url = 'https://www.youtube.com/channel/' + self.__channel_id
@@ -57,14 +63,12 @@ class Channel:
 
 
     @property
-
     def channel_id(self):
         return self.__channel_id
 
     def print_info(self) -> None:
         """Выводит в консоль информацию о канале."""
-        channel = self.youtube.channels().list\
-        (id = self.channel_id, part = 'snippet,statistics').execute()
+        channel = self.info_channel(self.channel_id)
         print(channel)
 
 
@@ -80,5 +84,4 @@ class Channel:
     @classmethod
     def get_service(cls):
         return cls.youtube
-
 
